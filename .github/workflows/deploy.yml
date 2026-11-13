@@ -1,0 +1,38 @@
+
+name: Build and Deploy Python App
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t nastasishka-python-app:latest .
+
+      - name: Stop old container
+        run: |
+          docker rm -f nastasishka-app || true
+
+      - name: Deploy new container
+        run: |
+          docker run -d \
+            --name nastasishka-app \
+            --restart unless-stopped \
+            -p 8080:5000 \
+            nastasishka-python-app:latest
+
+      - name: Check application
+        run: |
+          sleep 5
+          curl --fail http://localhost:8080/health
+
